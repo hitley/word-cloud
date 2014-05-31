@@ -20,6 +20,7 @@
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://marvl.infotech.monash.edu/webcola/cola.v3.min.js"></script>
 <script>
 
 var width = 1200,
@@ -27,10 +28,11 @@ var width = 1200,
 
 var color = d3.scale.category20();
 
-var force = d3.layout.force()
-    .charge(-1000)
-    .linkDistance(80)
-    .size([width, height]);
+var force = cola.d3adaptor()
+    .linkDistance(100)
+    .size([width, height])
+    .avoidOverlaps(true)
+    ;
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
@@ -63,7 +65,7 @@ d3.tsv("brain-dump.tsv", function(error, data) {
 
   var link = svg.selectAll(".link")
       .data(graph.links)
-    .enter().append("path")
+      .enter().append("path")
       .attr("class", "link")
       .attr("marker-end", "url(#arrowhead)")
       .attr("d", diagonal);      
@@ -203,7 +205,8 @@ var parseEntry = function(previousEntry, statement) {
 var calculateFontSize = function(node) {
     var size = 10*(node.inboundCount+node.outboundCount);
 
-    return size > 20 ? size < 60 ? size : 60 : 20;
+    // return size > 20 ? size < 60 ? size : 60 : 20;
+    return 24;
 }
 
 </script>
