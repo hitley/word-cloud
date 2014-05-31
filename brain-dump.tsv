@@ -3,8 +3,25 @@ Organisations -> need -> Change
 Boundaries -> support -> Change
 Monoliths -> hinder -> Change
 Mikado Method -> supports refactoring -> Monoliths
-Mikdao Mehtod -> supports -> Microservices
+-> supports -> Microservices
 Lifepreserver -> breaks down -> Monoliths
-Lifepreserver -> embraces -> Change
-Lifepreserver -> supports -> Boundaries
-Lifepreserver -> defines -> Microservices
+-> embraces -> Change
+-> supports -> Boundaries
+-> defines -> Microservices
+Microservices -> supports -> DDD
+PaaS -> supports -> Microservices
+DDD -> defines -> Boundaries
+Hexagonal Architecture -> supports -> DDD
+-> supports -> REST
+-> Mobile Apps
+-> Microservices
+WebApps -> uses -> REST
+Mobile Apps -> uses -> REST
+DevOps -> supports -> Microservices
+Events -> supports integration of -> Microservices
+-> enable -> Event Sourcing
+-> support -> Reactive Extensions
+-> make easier -> Testing
+-> feed into -> Big Data
+CQRS -> supports -> Microservices
+-> can use -> Event Sourcing

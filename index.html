@@ -7,31 +7,55 @@
   stroke-width: 1.5px;
 }
 
-.link {
-  stroke: #999;
-  stroke-opacity: .6;
+.text {
 }
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
 
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 
-var width = 800,
+var width = 1200,
     height = 800;
 
 var color = d3.scale.category20();
 
 var force = d3.layout.force()
     .charge(-1000)
-    .linkDistance(100)
+    .linkDistance(80)
     .size([width, height]);
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("miserables.json", function(error, graph) {
+svg.append("defs").append("marker")
+    .attr("id", "arrowhead")
+    .attr("refX", 0) /*must be smarter way to calculate shift*/
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 4)
+    .attr("orient", "auto")
+    .append("path")
+        .attr("d", "M 0,0 V 4 L6,2 Z"); //this is actual shape for arrowhead    
+
+d3.tsv("brain-dump.tsv", function(error, data) {
+  var nodeMap = {};
+  var nodes = createNodes(nodeMap, data);
+  var links= createLinks(nodeMap, data);
+
+  var graph = {
+    nodes:nodes,
+    links:links
+  }
+
   force
       .nodes(graph.nodes)
       .links(graph.links)
@@ -39,9 +63,10 @@ d3.json("miserables.json", function(error, graph) {
 
   var link = svg.selectAll(".link")
       .data(graph.links)
-      .enter().append("line")
+    .enter().append("path")
       .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+      .attr("marker-end", "url(#arrowhead)")
+      .attr("d", diagonal);      
 
   var node = svg.selectAll(".node")
       .data(graph.nodes)
@@ -50,25 +75,24 @@ d3.json("miserables.json", function(error, graph) {
       .call(force.drag);
 
   var rect = node.append('rect')
-                .style('fill', function(d) { return color(d.group); })
-                .attr('stroke', 'black');
+                // .style('fill', function(d) { return color(d.group); })
+                .style('fill', "white")
+                .attr('stroke', 'white')
+                ;
 
   var text = node.append('text')
+            .attr("class", "text")
             .attr("dy", "1em")
             .style("fill", "black");
             
 
 
   force.on("tick", function() {
-    link.attr("x1", function(d) {
-     return d.source.x; 
-    })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+    link.attr("d", diagonal);
 
     text.attr("x", function(d) { return d.x; })
         .attr("y", function(d) { return d.y; })
+        .attr("font-size", function(d) { return calculateFontSize(d); })
         .text(function(d) { return d.name; });
 
 
@@ -78,5 +102,108 @@ d3.json("miserables.json", function(error, graph) {
             .attr("height", function(d) { return text[0][d.index].getBBox().height; });            
   });
 });
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.x, d.y]; });
+
+
+var createNodes = function(nodeMap, data) {
+  var nodes = [];
+  var index=0
+  var entry = null;
+
+  data.forEach(function(d) {
+    var statement = d.statement;
+    entry = parseEntry(entry, statement);
+    if( !nodeMap.hasOwnProperty(entry.source) ) {
+      var node = {
+        "index": index,
+        "name": entry.source,
+        "group": 1,
+        "inboundCount": 0,
+        "outboundCount": 0
+      };
+      nodes.push(node);
+      nodeMap[entry.source] = node;
+      index++;
+    }
+    if( !nodeMap.hasOwnProperty(entry.target) ) {
+      var node = {
+        "index": index,
+        "name": entry.target,
+        "group": 1,
+        "inboundCount": 0,
+        "outboundCount": 0
+      };
+      nodes.push(node);
+      nodeMap[entry.target] = node;
+      index++;
+    }
+
+  });
+
+  return nodes;
+}
+
+var createLinks = function(nodeMap, data) {
+  var links = [];
+  var entry = null;
+
+  data.forEach(function(d) {
+    var statement = d.statement;
+    entry = parseEntry(entry, statement);
+    links.push({
+      "source": nodeMap[entry.source].index,
+      "target": nodeMap[entry.target].index,
+      "value": 10,
+      "label": entry.label
+    });
+    nodeMap[entry.target].inboundCount = nodeMap[entry.target].inboundCount+1
+    nodeMap[entry.source].outboundCount = nodeMap[entry.source].outboundCount+1
+  });
+
+  return links;
+}
+
+var parseEntry = function(previousEntry, statement) {
+  var splitresult = statement.split("->")
+  var result 
+
+  switch(splitresult.length) {
+    case 2: {
+      result = {
+        "source" : previousEntry.source,
+        "label" : splitresult[0].trim(),
+        "target" : splitresult[1].trim()
+      }
+    break;
+    }
+    case 3: {
+      var source = splitresult[0].trim().length != 0 ? splitresult[0].trim() : previousEntry.source;
+      result = {
+        "source" : source,
+        "label" : splitresult[1].trim(),
+        "target" : splitresult[2].trim()
+      }
+    break;
+    }
+    default :  {
+      result = {
+        "source" : statement,
+        "label" : "",
+        "target" : ""
+      }
+    }
+
+  }
+
+  return result;
+}
+
+var calculateFontSize = function(node) {
+    var size = 10*(node.inboundCount+node.outboundCount);
+
+    return size > 20 ? size < 60 ? size : 60 : 20;
+}
 
 </script>
