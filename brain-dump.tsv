@@ -1,0 +1,10 @@
+statement
+Organisations -> need -> Change
+Boundaries -> support -> Change
+Monoliths -> hinder -> Change
+Mikado Method -> supports refactoring -> Monoliths
+Mikdao Mehtod -> supports -> Microservices
+Lifepreserver -> breaks down -> Monoliths
+Lifepreserver -> embraces -> Change
+Lifepreserver -> supports -> Boundaries
+Lifepreserver -> defines -> Microservices
