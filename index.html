@@ -36,7 +36,7 @@
 
 .rect {
   fill: white;
-  opacity: 1.0;
+  opacity: 0.4;
 }
 
 
@@ -73,7 +73,7 @@ svg.append('svg:defs').append('svg:marker')
             .attr('refX', 8)
             .attr('markerWidth', 6)
             .attr('markerHeight', 6)
-            .attr('orient', 'auto')
+            .attr('orient', calculateMarkerOrientation)
           .append('svg:path')
             .attr('d', 'M0,-5L10,0L0,5L2,0')
             .attr('stroke-width', '0px')
@@ -95,6 +95,10 @@ function redraw() {
     vis.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 }            
 
+function calculateMarkerOrientation(d) {
+  return 'auto';
+}
+
 d3.tsv("brain-dump.tsv", function(error, data) {
   var nodeMap = {};
   var nodes = createNodes(nodeMap, data);
@@ -112,7 +116,7 @@ d3.tsv("brain-dump.tsv", function(error, data) {
 
   var link = vis.selectAll(".link")
       .data(graph.links)
-    .enter().append("path")
+    .enter().append("line")
       .attr("class", "link")
       .attr("d", diagonal);      
 
@@ -152,7 +156,16 @@ d3.tsv("brain-dump.tsv", function(error, data) {
         .attr("width",  function(d) { return calculateBoxWidth(text , d); })
         .attr("height", function(d) { return calculateBoxHeigth(text, d); });            
 
-    link.attr("d", diagonal);
+
+    link.attr("x1", function(d) { return calculateLinkSourcePoint(d).x; })
+        .attr("y1", function(d) { return calculateLinkSourcePoint(d).y; })
+        .attr("x2", function(d) { return calculateLinkTargetPoint(d).x; })
+        .attr("y2", function(d) { return calculateLinkTargetPoint(d).y; });
+        //.attr("d", diagonal);
+        //.attr("marker-end", function(d) { return "url(#special)"; });
+
+
+//    link.attr("d", diagonal);
 
     nodes.forEach( function(d) {
         d.width = calculateBoxWidth(text , d);
@@ -184,8 +197,20 @@ var calculateBoxHeigth = function(text, d) {
 
 // var diagonal = d3.svg.diagonal()
 //     .projection(function(d) { return [d.x, d.y]; });
-var diagonal = d3.svg.diagonal()
-    .source(function(d) {
+// var diagonal = d3.svg.diagonal()
+//     .source(function(d) {
+//       var s = d.source;
+//       var t = d.target;
+//       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
+//     })            
+//     .target(function(d) {
+//       var s = d.target;
+//       var t = d.source;
+//       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
+//     })
+//     .projection(function(d) { return [d.x, d.y]; });
+var diagonal = d3.svg.diagonal(
+)    .source(function(d) {
       var s = d.source;
       var t = d.target;
       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
@@ -196,6 +221,19 @@ var diagonal = d3.svg.diagonal()
       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
     })
     .projection(function(d) { return [d.x, d.y]; });
+
+var calculateLinkSourcePoint = function(d) {
+      var s = d.source;
+      var t = d.target;
+      return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
+}
+
+var calculateLinkTargetPoint = function(d) {
+      var s = d.target;
+      var t = d.source;
+      return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
+}
+
 
 
 var createNodes = function(nodeMap, data) {

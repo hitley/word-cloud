@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+ 
+#base-path {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+ 
+#marker-path {
+  fill: none;
+  stroke: red;
+  stroke-width: 1.5px;
+  marker-mid: url(#marker);
+}
+ 
+</style>
+<svg width="960" height="500">
+  <marker id="marker"
+      viewBox="0 0 6 6"
+      refY="3"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto">
+    <path d="M0,3v-3l6,3l-6,3z"></path>
+  </marker>
+  <path id="base-path"></path>
+  <path id="marker-path"></path>
+</svg>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+ 
+var z = Math.PI - 0.1;
+ 
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+ 
+var markerPath = d3.select("#marker-path");
+ 
+d3.timer(function() {
+  if ((z += 0.005) > Math.PI + 0.5) z = Math.PI -0.1;
+  var join = 'L';
+  var path = 'M300,300' + join +
+    [300 + Math.cos(z) * 50, 300 + Math.sin(z) * 50] + join +
+    [300 + Math.cos(z + 0.1) * 100, 300 + Math.sin(z + 0.1) * 100] + join +
+    [300 + Math.cos(z) * 150, 300 + Math.sin(z) * 150] + join +
+    [300 + Math.cos(z) * 200, 300 + Math.sin(z) * 200];
+  markerPath.attr("d", path);
+});
+ 
+</script>
