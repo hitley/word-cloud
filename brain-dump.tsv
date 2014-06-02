@@ -1,25 +1,25 @@
 statement
 Organisations -> need -> Change
-Boundaries -> support -> Change
 Monoliths -> hinder -> Change
-Mikado Method -> supports refactoring -> Monoliths
--> supports -> Microservices
 Lifepreserver -> breaks down -> Monoliths
 -> embraces -> Change
--> supports -> Boundaries
--> defines -> Microservices
+-> defines -> Boundaries
+Lifepreserver -> defines -> Microservices
+Boundaries -> support -> Change
+Mikado Method -> supports refactoring -> Monoliths
+Mikado Method -> supports -> Microservices
 Microservices -> supports -> DDD
-PaaS -> supports -> Microservices
 DDD -> defines -> Boundaries
+PaaS -> supports -> Microservices
 Hexagonal Architecture -> supports -> DDD
 -> supports -> REST
--> Mobile Apps
--> Microservices
-WebApps -> uses -> REST
+-> supports -> Mobile Apps
+-> supports -> Microservices
+WebApp -> uses -> REST
 Mobile Apps -> uses -> REST
 DevOps -> supports -> Microservices
 DevOps -> manages -> PaaS
-Events -> supports integration of -> Microservices
+Events -> support integration of -> Microservices
 -> enable -> Event Sourcing
 -> support -> Reactive Extensions
 -> make easier -> Testing

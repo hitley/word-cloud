@@ -3,31 +3,34 @@
 <style>
 
 .node {
-  stroke: #fff;
-  stroke-width: 1.5px;
-  /*opacity: 0.1;*/
-  /*fill: white;*/
 }
 
-.text {
-    fill: white;
+.node-text {
+    stroke : rgb(40,40,40);
+    fill: rgb(40,40,40);
     font-family: Verdana;
     /*font-size: 25px;*/
-    text-anchor: left;
     cursor: move;
-    /*opacity: 0.1;*/
+}
+
+.linkNode-text {
+    stroke : rgb(40,40,40);
+    fill: rgb(40,40,40);
+    font-family: Verdana;
+    font-size: 30px;
+    cursor: move;
 }
 
 
 .link {
   fill: none;
-  stroke: #ccc;
+  stroke: rgb(145,145,145);
   stroke-width: 3.0px;
   marker-end: url(#end-arrow)
 }
 
 .end-arrow path {
-  fill: #ccc;
+  fill: rgb(145,145,145);
 }
 
 .background {
@@ -35,8 +38,9 @@
 }
 
 .rect {
-  fill: white;
-  opacity: 0.4;
+  stroke : rgb(145,145,145);
+  fill: rgb(204,204,204);
+  opacity: 1.0;
 }
 
 
@@ -52,9 +56,7 @@ var width = 2048,
 var color = d3.scale.category20();
 
 var force = cola.d3adaptor()
-    //.flowLayout('y', 800)
-    //.jaccardLinkLengths(1050)
-    .linkDistance(250)
+    .linkDistance(200)
     .size([width, height])
     .avoidOverlaps(true)
     ;
@@ -102,7 +104,7 @@ function calculateMarkerOrientation(d) {
 d3.tsv("brain-dump.tsv", function(error, data) {
   var nodeMap = {};
   var nodes = createNodes(nodeMap, data);
-  var links= createLinks(nodeMap, data);
+  var links= createLinks(nodes, nodeMap, data);
 
   var graph = {
     nodes:nodes,
@@ -117,16 +119,16 @@ d3.tsv("brain-dump.tsv", function(error, data) {
   var link = vis.selectAll(".link")
       .data(graph.links)
     .enter().append("line")
-      .attr("class", "link")
-      .attr("d", diagonal);      
+      .attr("class", 'link');
 
-  var node = vis.selectAll(".node")
+  var node = vis.selectAll(".allNodes")
       .data(graph.nodes)
     .enter()
       .append("g")
+      .attr("class", function(d) {return d.type;})
       .call(force.drag);
 
-  var rect = node.append('rect')
+  var rect = vis.selectAll('.node').append('rect')
                 .attr('class','rect')
                 // .style('fill', function(d) { return color(d.group); })
                 .attr("rx", 10).attr("ry", 10)
@@ -134,9 +136,11 @@ d3.tsv("brain-dump.tsv", function(error, data) {
                 .attr('stroke', 'black')
                 ;
 
+  // var text = node.append('text')
+  //           .attr("class", function(d) {return d.type+"-text"});
+
   var text = node.append('text')
-            .attr("class", "text")
-            .style("fill", "black");
+            .attr("class", function(d) {return d.type+"-text"});
             
 
 
@@ -161,10 +165,8 @@ d3.tsv("brain-dump.tsv", function(error, data) {
         .attr("y1", function(d) { return calculateLinkSourcePoint(d).y; })
         .attr("x2", function(d) { return calculateLinkTargetPoint(d).x; })
         .attr("y2", function(d) { return calculateLinkTargetPoint(d).y; });
-        //.attr("d", diagonal);
-        //.attr("marker-end", function(d) { return "url(#special)"; });
 
-
+// use with path
 //    link.attr("d", diagonal);
 
     nodes.forEach( function(d) {
@@ -194,34 +196,6 @@ var calculateBoxHeigth = function(text, d) {
     return text[0][d.index].getBBox().height+2*border;
 }
 
-
-// var diagonal = d3.svg.diagonal()
-//     .projection(function(d) { return [d.x, d.y]; });
-// var diagonal = d3.svg.diagonal()
-//     .source(function(d) {
-//       var s = d.source;
-//       var t = d.target;
-//       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
-//     })            
-//     .target(function(d) {
-//       var s = d.target;
-//       var t = d.source;
-//       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
-//     })
-//     .projection(function(d) { return [d.x, d.y]; });
-var diagonal = d3.svg.diagonal(
-)    .source(function(d) {
-      var s = d.source;
-      var t = d.target;
-      return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
-    })            
-    .target(function(d) {
-      var s = d.target;
-      var t = d.source;
-      return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
-    })
-    .projection(function(d) { return [d.x, d.y]; });
-
 var calculateLinkSourcePoint = function(d) {
       var s = d.source;
       var t = d.target;
@@ -233,6 +207,16 @@ var calculateLinkTargetPoint = function(d) {
       var t = d.source;
       return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
 }
+
+// use this when using paths for links
+var diagonal = d3.svg.diagonal()
+    .source(function(d) {
+      return calculateLinkSourcePoint(d);
+    })            
+    .target(function(d) {
+      return calculateLinkTargetPoint(d);
+    })
+    .projection(function(d) { return [d.x, d.y]; });
 
 
 
@@ -246,6 +230,7 @@ var createNodes = function(nodeMap, data) {
     entry = parseEntry(entry, statement);
     if( !nodeMap.hasOwnProperty(entry.source) ) {
       var node = {
+        "type": "node",
         "index": index,
         "name": entry.source,
         "group": 1,
@@ -258,6 +243,7 @@ var createNodes = function(nodeMap, data) {
     }
     if( !nodeMap.hasOwnProperty(entry.target) ) {
       var node = {
+        "type": "node",
         "index": index,
         "name": entry.target,
         "group": 1,
@@ -268,27 +254,45 @@ var createNodes = function(nodeMap, data) {
       nodeMap[entry.target] = node;
       index++;
     }
-
   });
 
   return nodes;
 }
 
-var createLinks = function(nodeMap, data) {
+var createLinks = function(nodes, nodeMap, data) {
   var links = [];
   var entry = null;
+  var index = 1000;
 
   data.forEach(function(d) {
     var statement = d.statement;
     entry = parseEntry(entry, statement);
+    var linkNode = {
+        "type": "linkNode",
+        "index": index,
+        "name": entry.label,
+        "group": 1,
+        "inboundCount": 0,
+        "outboundCount": 0
+    };
+    nodes.push(linkNode);
+    index++;
+
     links.push({
       "source": nodeMap[entry.source].index,
+      "target": linkNode,
+      "value": 10,
+      "label": entry.label
+    });
+    links.push({
+      "source": linkNode,
       "target": nodeMap[entry.target].index,
       "value": 10,
       "label": entry.label
     });
     nodeMap[entry.target].inboundCount = nodeMap[entry.target].inboundCount+1
     nodeMap[entry.source].outboundCount = nodeMap[entry.source].outboundCount+1
+
   });
 
   return links;
@@ -331,7 +335,7 @@ var parseEntry = function(previousEntry, statement) {
 
 var calculateFontSize = function(node) {
     var minSize = 30;
-    var maxSize = 60
+    var maxSize = 50
 
     var size = 10*(node.inboundCount+node.outboundCount);
 
