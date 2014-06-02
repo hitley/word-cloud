@@ -18,20 +18,25 @@
     /*opacity: 0.1;*/
 }
 
+
 .link {
   fill: none;
   stroke: #ccc;
-  stroke-width: 1.5px;
-  marker-mid: url(#end-arrow);
+  stroke-width: 3.0px;
+  marker-end: url(#end-arrow)
+}
+
+.end-arrow path {
+  fill: #ccc;
 }
 
 .background {
-  /*fill: none;*/
+  fill: none;
 }
 
 .rect {
   fill: white;
-  opacity: 0.4;
+  opacity: 1.0;
 }
 
 
@@ -62,6 +67,7 @@ var svg = d3.select("body").append("svg")
     ;
 
 svg.append('svg:defs').append('svg:marker')
+            .attr('class', 'end-arrow')
             .attr('id', 'end-arrow')
             .attr('viewBox', '0 -5 10 10')
             .attr('refX', 8)

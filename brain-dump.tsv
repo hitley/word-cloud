@@ -18,6 +18,7 @@ Hexagonal Architecture -> supports -> DDD
 WebApps -> uses -> REST
 Mobile Apps -> uses -> REST
 DevOps -> supports -> Microservices
+DevOps -> manages -> PaaS
 Events -> supports integration of -> Microservices
 -> enable -> Event Sourcing
 -> support -> Reactive Extensions
