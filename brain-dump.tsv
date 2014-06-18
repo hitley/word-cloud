@@ -1,28 +1,31 @@
 statement
 Organisations -> need -> Change
 Monoliths -> hinder -> Change
-Lifepreserver -> breaks down -> Monoliths
--> embraces -> Change
--> defines -> Boundaries
-Lifepreserver -> defines -> Microservices
 Boundaries -> support -> Change
-Mikado Method -> supports refactoring -> Monoliths
-Mikado Method -> supports -> Microservices
-Microservices -> supports -> DDD
 DDD -> defines -> Boundaries
-PaaS -> supports -> Microservices
-Hexagonal Architecture -> supports -> DDD
+Lifepreserver -> helps to find -> Boundaries
+Lifepreserver -> embraces -> Change
+Lifepreserver -> breaks down -> Monoliths
+Lifepreserver -> defines -> uServices
+Mikado Meth -> supports -> uServices
+Mikado Meth -> supports refactoring -> Monoliths
+uServices -> supports -> DDD
+Hex.Arch. -> supports -> DDD
+-> supports -> uServices
 -> supports -> REST
 -> supports -> Mobile Apps
--> supports -> Microservices
-WebApp -> uses -> REST
-Mobile Apps -> uses -> REST
-DevOps -> supports -> Microservices
+WebApps -> use -> REST
+Mobile Apps -> use -> REST
+uServices -> use -> REST
+PaaS -> supports -> uServices
 DevOps -> manages -> PaaS
-Events -> support integration of -> Microservices
--> enable -> Event Sourcing
--> support -> Reactive Extensions
+DevOps -> supports -> uServices
+Events -> support integration of -> uServices
 -> make easier -> Testing
 -> feed into -> Big Data
-CQRS -> supports -> Microservices
--> can use -> Event Sourcing
+Reactive Extensions -> use -> Events 
+-> support -> Mobile Apps
+-> support -> WebApps
+CQRS -> supports -> Hex.Arch.
+CQRS -> can use -> Event Sourcing
+Events -> enable -> Event Sourcing

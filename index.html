@@ -53,21 +53,36 @@
 
 </style>
 <body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://marvl.infotech.monash.edu/webcola/cola.v3.min.js"></script>
+<script src="js/d3.v3.min.js" type="text/javascript"></script>
+<!-- <script src="js/rxjs-all.js" type="text/javascript"></script> -->
+<script src="js/cola.v3.min.js" type="text/javascript"></script>
 <script>
+
+Array.prototype.clear = function() {
+  while (this.length > 0) {
+    this.pop();
+  }
+};
 
 var width = 2048,
     height = 1200;
 
 var color = d3.scale.category20();
 
-var force = cola.d3adaptor()
+var force = 
+    cola.d3adaptor()
     .linkDistance(200)
     .size([width, height])
-    .avoidOverlaps(true)
+    .avoidOverlaps(false)
     ;
-
+    // d3.layout.force()
+    // .charge(-4000)
+    // .linkDistance(180)
+    // .size([width, height])
+    //.friction(0.9)
+    //.gravity(0.2)
+    //.alpha(0.0)
+    ;
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
@@ -123,28 +138,117 @@ d3.select("body").on('keyup', function() {
 var statementIndex = 0;
 var graphModel = { nodes:[], links:[] };
 var viewModel = { nodes:[], links:[] };
-var nodes = [];
-var links= [];
 
 
 d3.tsv("brain-dump.tsv", function(error, data) {
-  var nodeMap = {};
-  nodes = createNodes(nodeMap, data);
-  links= createLinks(nodes, nodeMap, data);
-
-  graphModel = {
-    nodes:nodes,
-    links:links
-  };
+  graphModel = createGraphModel(data);
   viewModel = {
-	nodes:[],
+  	nodes:[],
     links:[]
   };
   updateViewModel();
   update();
 });
 
+function createGraphModel(data) {
+  var tmpGraphModel = {
+    nodes:[],
+    links:[]
+  }
+  parseData(tmpGraphModel, data);
+  return tmpGraphModel;
+}
+
+function parseData(model, data) {
+  var nodes = [];
+  var links= [];
+  var nodeMap = {};
+  var index=0
+  var entry = null;
+
+  data.forEach(function(d) {
+    var statement = d.statement;
+    entry = parseEntry(entry, statement);
+    if( !nodeMap.hasOwnProperty(entry.source) ) {
+      var node = {
+    "statementIndex":entry.index,
+        "type": "node",
+        "index": index,
+        "name": entry.source,
+        "group": 1,
+        "inboundCount": 0,
+        "outboundCount": 0
+      };
+      nodes.push(node);
+      nodeMap[entry.source] = node;
+      index++;
+    }
+
+
+    var linkNode = {
+    "statementIndex":entry.index,
+        "type": "linkNode",
+        "index": index,
+        "name": entry.label,
+        "group": 1,
+        "inboundCount": 0,
+        "outboundCount": 0
+    };
+    nodes.push(linkNode);
+    index++;
+
+    if( !nodeMap.hasOwnProperty(entry.target) ) {
+      var node = {
+    "statementIndex":entry.index,
+        "type": "node",
+        "index": index,
+        "name": entry.target,
+        "group": 1,
+        "inboundCount": 0,
+        "outboundCount": 0
+      };
+      nodes.push(node);
+      nodeMap[entry.target] = node;
+      index++;
+    }
+
+    links.push({
+    "statementIndex":entry.index,
+      "source": nodeMap[entry.source],
+      "target": linkNode,
+      "value": 10,
+      "label": entry.label
+    });
+
+
+    links.push({
+    "statementIndex":entry.index,
+      "source": linkNode,
+      "target": nodeMap[entry.target],
+      "value": 10,
+      "label": entry.label
+    });
+
+    nodeMap[entry.target].inboundCount = nodeMap[entry.target].inboundCount+1
+    nodeMap[entry.source].outboundCount = nodeMap[entry.source].outboundCount+1
+  });
+  model.nodes = nodes;
+  model.links = links;
+}
+
+
 function updateViewModel() {
+  // viewModel.nodes.reverse().forEach(function(d) {
+  //   if(d.statementIndex >= statementIndex) {
+  //     viewModel.nodes.pop();
+  //   }
+  // });
+  // viewModel.links.reverse().forEach(function(d) {
+  //   if(d.statementIndex >= statementIndex) {
+  //     viewModel.links.pop();
+  //   }
+  // });
+
 	graphModel.nodes.forEach(function(d) {
 		if(d.statementIndex == statementIndex) {
 			viewModel.nodes.push(d);
@@ -174,10 +278,14 @@ function refresh() {
       // .style('fill', function(d) { return color(d.group); })
       .attr("rx", 10).attr("ry", 10)
       //.style('fill', "white")
+      .attr('x', 0)
+      .attr('y', 0)
       .attr('stroke', 'black');
 
   g.append('text')
       .attr("class", function(d) {return d.type+"-text"})
+      .attr('x', 0)
+      .attr('y', 0)
       .text(function(d) { return d.name; })
 	  .call(force.drag);
 
@@ -204,11 +312,9 @@ function update() {
     var nodeText = vis.selectAll(".node-text, .linkNode-text");
 		
 		vis.selectAll(".node-text, .linkNode-text")
-			.attr("x", function(d) {
-         return calculateBoxXPos( nodeText, d ); }
-      )
+			.attr("x", function(d) { return calculateBoxXPos( nodeText, d ); })
 			.attr("y", function(d) { return calculateBoxYPos( nodeText, d ); })
-			.attr("dx", function(d) { return border; })
+			.attr("dx", function(d) { return margin; })
 			.attr("dy", function(d) { return calculateBoxHeigth( nodeText, d)/2+calculateFontSize(d)/4; })
 			.attr("font-size", function(d) { return calculateFontSize(d); })
 //			.text(function(d) { return d.name; })
@@ -236,7 +342,7 @@ function update() {
 
 	  });
 }
-var border = 10;
+var margin = 10;
 
 var calculateBoxXPos = function(text, d) {
     return d.x - calculateBoxWidth(text, d)/2;
@@ -247,23 +353,23 @@ var calculateBoxYPos = function(text, d) {
 }
 
 var calculateBoxWidth = function(text, d) {
-    return text[0][d.index].getBBox().width+2*border;
+    return text[0][d.index].getBBox().width+2*margin;
 }
 
 var calculateBoxHeigth = function(text, d) {
-    return text[0][d.index].getBBox().height+2*border;
+    return text[0][d.index].getBBox().height+2*margin;
 }
 
 var calculateLinkSourcePoint = function(d) {
       var s = d.source;
       var t = d.target;
-      return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
+      return calculateIntersection(s.x, s.y, s.width === undefined ? 1 : s.width, s.height === undefined ? 1 : s.height, t.x, t.y);
 }
 
 var calculateLinkTargetPoint = function(d) {
       var s = d.target;
       var t = d.source;
-      return calculateIntersection(s.x, s.y, s.width, s.height, t.x, t.y);
+      return calculateIntersection(s.x, s.y, s.width === undefined ? 1 : s.width, s.height === undefined ? 1 : s.height, t.x, t.y);
 }
 
 // use this when using paths for links
@@ -276,90 +382,6 @@ var diagonal = d3.svg.diagonal()
     })
     .projection(function(d) { return [d.x, d.y]; });
 
-
-
-var createNodes = function(nodeMap, data) {
-  var nodes = [];
-  var index=0
-  var entry = null;
-
-  data.forEach(function(d) {
-    var statement = d.statement;
-    entry = parseEntry(entry, statement);
-    if( !nodeMap.hasOwnProperty(entry.source) ) {
-      var node = {
-		"statementIndex":entry.index,
-        "type": "node",
-        "index": index,
-        "name": entry.source,
-        "group": 1,
-        "inboundCount": 0,
-        "outboundCount": 0
-      };
-      nodes.push(node);
-      nodeMap[entry.source] = node;
-      index++;
-    }
-    if( !nodeMap.hasOwnProperty(entry.target) ) {
-      var node = {
-		"statementIndex":entry.index,
-        "type": "node",
-        "index": index,
-        "name": entry.target,
-        "group": 1,
-        "inboundCount": 0,
-        "outboundCount": 0
-      };
-      nodes.push(node);
-      nodeMap[entry.target] = node;
-      index++;
-    }
-  });
-
-  return nodes;
-}
-
-var createLinks = function(nodes, nodeMap, data) {
-  var links = [];
-  var entry = null;
-  var index = 1000;
-
-  data.forEach(function(d) {
-    var statement = d.statement;
-    entry = parseEntry(entry, statement);
-    var linkNode = {
-		"statementIndex":entry.index,
-        "type": "linkNode",
-        "index": index,
-        "name": entry.label,
-        "group": 1,
-        "inboundCount": 0,
-        "outboundCount": 0
-    };
-    nodes.push(linkNode);
-    index++;
-
-    links.push({
-	  "statementIndex":entry.index,
-      "source": nodeMap[entry.source],
-      "target": linkNode,
-      "value": 10,
-      "label": entry.label
-    });
-    links.push({
-	  "statementIndex":entry.index,
-      "source": linkNode,
-      "target": nodeMap[entry.target],
-      "value": 10,
-      "label": entry.label
-    });
-    nodeMap[entry.target].inboundCount = nodeMap[entry.target].inboundCount+1
-    nodeMap[entry.source].outboundCount = nodeMap[entry.source].outboundCount+1
-
-  });
-
-  return links;
-}
 
 var parseEntry = function(previousEntry, statement) {
   var splitresult = statement.split("->");
@@ -405,7 +427,8 @@ var calculateFontSize = function(node) {
     var minSize = 30;
     var maxSize = 50
 
-    var size = 10*(node.inboundCount+node.outboundCount);
+    var size = 10*node.weight;
+    //(node.inboundCount+node.outboundCount);
 
     return size > minSize ? size < maxSize ? size : maxSize : minSize;
     //return size;
