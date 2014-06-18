@@ -6,7 +6,7 @@ DDD -> defines -> Boundaries
 Lifepreserver -> helps to find -> Boundaries
 Lifepreserver -> embraces -> Change
 Lifepreserver -> breaks down -> Monoliths
-Lifepreserver -> defines -> uServices
+Lifepreserver -> define -> uServices
 Mikado Meth -> supports -> uServices
 Mikado Meth -> supports refactoring -> Monoliths
 uServices -> supports -> DDD

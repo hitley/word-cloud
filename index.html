@@ -49,6 +49,10 @@
   opacity: 1.0;
 }
 
+.current-statement {
+  stroke : green;
+  fill: green;
+}
 
 
 </style>
@@ -64,10 +68,15 @@ Array.prototype.clear = function() {
   }
 };
 
+Array.prototype.last = function() {
+    return this[this.length-1];
+}
+
 var width = 2048,
     height = 1200;
 
 var color = d3.scale.category20();
+
 
 var force = 
     cola.d3adaptor()
@@ -126,13 +135,15 @@ function calculateMarkerOrientation(d) {
 
 d3.select("body").on('keyup', function() {
   if(d3.event.keyIdentifier == 'Up') {
-    statementIndex++;
+    if(statementIndex<graphModel.nodes.last().statementIndex) {
+      statementIndex++;
+      updateViewModel();
+      update();
+    }
   }
-  if(d3.event.keyIdentifier == 'Down') {
-    statementIndex--;
-  }
-	updateViewModel();
-  update();
+  // if(d3.event.keyIdentifier == 'Down') {
+  //   //statementIndex--;
+  // }
 });
 
 var statementIndex = 0;
@@ -229,8 +240,8 @@ function parseData(model, data) {
       "label": entry.label
     });
 
-    nodeMap[entry.target].inboundCount = nodeMap[entry.target].inboundCount+1
-    nodeMap[entry.source].outboundCount = nodeMap[entry.source].outboundCount+1
+    // nodeMap[entry.target].inboundCount = nodeMap[entry.target].inboundCount+1
+    // nodeMap[entry.source].outboundCount = nodeMap[entry.source].outboundCount+1
   });
   model.nodes = nodes;
   model.links = links;
@@ -256,6 +267,8 @@ function updateViewModel() {
 	});
 	graphModel.links.forEach(function(d) {
 		if(d.statementIndex == statementIndex) {
+      d.source.outboundCount=d.source.outboundCount+1
+      d.target.inboundCount=d.target.inboundCount+1
 			viewModel.links.push(d);
 		}
 	});
@@ -317,7 +330,9 @@ function update() {
 			.attr("dx", function(d) { return margin; })
 			.attr("dy", function(d) { return calculateBoxHeigth( nodeText, d)/2+calculateFontSize(d)/4; })
 			.attr("font-size", function(d) { return calculateFontSize(d); })
-//			.text(function(d) { return d.name; })
+      .attr("class", function(d) { 
+        return d.statementIndex == statementIndex ? d.type+"-text current-statement" : d.type+"-text"; 
+      })
       ;
 
 
@@ -423,15 +438,19 @@ var parseEntry = function(previousEntry, statement) {
   return result;
 }
 
+var minSize = 20;
+var maxSize = 60;
+var fontSize = d3.scale.linear().domain([1,10]).range([minSize, maxSize]);
+
 var calculateFontSize = function(node) {
-    var minSize = 30;
-    var maxSize = 50
 
-    var size = 10*node.weight;
-    //(node.inboundCount+node.outboundCount);
+    // var size = 10*node.weight;
+    // //(node.inboundCount+node.outboundCount);
 
-    return size > minSize ? size < maxSize ? size : maxSize : minSize;
-    //return size;
+    // return size > minSize ? size < maxSize ? size : maxSize : minSize;
+    // return size;
+
+    return fontSize(node.inboundCount+node.outboundCount);
 }
 
 var calculateIntersection = function(x1, y1, w1, h1, x2, y2) {
