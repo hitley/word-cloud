@@ -134,7 +134,7 @@ function calculateMarkerOrientation(d) {
 }
 
 d3.select("body").on('keyup', function() {
-  if(d3.event.keyIdentifier == 'Up') {
+  if(d3.event.code == 'ArrowUp') {
     if(statementIndex<graphModel.nodes.last().statementIndex) {
       statementIndex++;
       updateViewModel();
